@@ -22,10 +22,10 @@ public class NonBlockingSynchronisation {
 		System.out.println(lockFreeList.add(2));
 		System.out.println(lockFreeList.add(1));
 		
-		SynchrThread threads[] = new SynchrThread[2];
+		Thread threads[] = new Thread[2];
 		
-		threads[0] = new SynchrThread(lockFreeList, false);
-		threads[1] = new SynchrThread(lockFreeList, true);
+		threads[0] = new Thread(() -> lockFreeList.add(5));
+		threads[1] = new Thread(() -> lockFreeList.remove(3));
 		
 		for (int i = 0; i < 2; i++) {
 			threads[i].start();
