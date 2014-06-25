@@ -4,14 +4,14 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
 
 public class LockFreeList<T> implements Set<T> {
 
-	private Node<T> head;	
-	
+	private Node<T> head;
+
 	public LockFreeList() {
-		this.head      = new Node<T>(null, Integer.MIN_VALUE);
+		this.head = new Node<T>(null, Integer.MIN_VALUE);
 		this.head.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);
-		
+
 		Node<T> node = this.head.next.getReference();
-		node.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);		
+		node.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);
 	}
 
 	class Window {
