@@ -7,20 +7,21 @@ public class LockFreeList<T> implements Set<T> {
 
 	@Override
 	public boolean add(T item) {
+		
 		int key = item.hashCode();
-		Node head = null;
+		Node<T> head = null;
 
 		while (true) {
 			Window window = find(head, key);
 
-			Node pred = window.pred, curr = window.curr;
+			Node<T> pred = window.pred, curr = window.curr;
 
 			if (curr.key == key) {
 				return false;
 			} else {
-				Node node = new Node(item);
+				Node<T> node = new Node<T>(item);
 
-				node.next = new AtomicMarkableReference<T>(curr, false);
+				node.next = new AtomicMarkableReference<Node<T>>(curr, false);
 
 				if (pred.next.compareAndSet(curr, node, false, false)) {
 					return true;
@@ -28,12 +29,12 @@ public class LockFreeList<T> implements Set<T> {
 			}
 		}
 	}
+	
+	public Window find(Node<T> head, int key) {
+		Node<T> pred = null, curr = null, succ = null;
 
-	public Window find(Node head, int key) {
-		Node pred = null, curr = null, succ = null;
-
-		Boolean marked = false;
-		Boolean snip;
+		boolean[] marked = {false};
+		boolean snip;
 
 		retry: while (true) {
 
@@ -44,7 +45,7 @@ public class LockFreeList<T> implements Set<T> {
 
 				succ = curr.next.get(marked);
 
-				while (marked) {
+				while (marked[0]) {
 
 					snip = pred.next.compareAndSet(curr, succ, false, false);
 
