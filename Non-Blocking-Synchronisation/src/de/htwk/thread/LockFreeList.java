@@ -17,7 +17,7 @@ public class LockFreeList<T> implements Set<T> {
 	
 	
 	@Override
-	public boolean add(T item) {		
+	public boolean add(T item) {
 		int key = item.hashCode();
 		Node head = null;
 
