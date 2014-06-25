@@ -8,7 +8,7 @@ public class LockFreeList<T> implements Set<T> {
 	
 	public LockFreeList() {
 		this.head      = new Node<T>(null, Integer.MIN_VALUE);
-		this.head.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MIN_VALUE), false);
+		this.head.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);
 		
 		Node<T> node = this.head.next.getReference();
 		node.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);		
@@ -75,7 +75,6 @@ public class LockFreeList<T> implements Set<T> {
 				}
 
 				if (curr.key >= key) {
-
 					return new Window(pred, curr);
 				}
 
