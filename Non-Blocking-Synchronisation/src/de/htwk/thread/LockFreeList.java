@@ -124,13 +124,27 @@ public class LockFreeList<T> implements Set<T> {
 
 		return (curr.key == key && !marked[0]);
 	}
-
-	public void print() {
-		Node<T> curr = head;
-
-		do {
-			System.out.println(curr.key);
+	
+	
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder("{");
+		
+		boolean[] marked = { false };
+		Node<T> curr = this.head;
+		
+		boolean firstElement = true;
+		while (curr.key < Integer.MAX_VALUE) {
 			curr = curr.next.getReference();
-		} while (curr.next != null);
+			curr.next.get(marked);
+			
+			if (!marked[0] && curr.key < Integer.MAX_VALUE) {
+				if (!firstElement) builder.append(", ");
+				builder.append(curr.item.toString());
+				firstElement = false;
+			}
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 }

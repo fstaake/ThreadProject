@@ -35,7 +35,7 @@ public class NonBlockingSynchronisation {
 			threads[i].join();
 		}
 		
-		lockFreeList.print();
+		System.out.println(lockFreeList);
 	}
 
 }
