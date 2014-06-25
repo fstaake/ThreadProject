@@ -124,8 +124,7 @@ public class LockFreeList<T> implements Set<T> {
 
 		return (curr.key == key && !marked[0]);
 	}
-	
-	
+		
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder("{");
