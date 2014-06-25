@@ -35,8 +35,8 @@ public class LockFreeList<T> implements Set<T> {
 		
 		Node<T> pred = null, curr = null, succ = null;
 
-		Boolean marked = false;
-		Boolean snip;
+		boolean[] marked = {false};
+		boolean snip;
 
 		retry: while (true) {
 
@@ -47,7 +47,7 @@ public class LockFreeList<T> implements Set<T> {
 
 				succ = curr.next.get(marked);
 
-				while (marked) {
+				while (marked[0]) {
 
 					snip = pred.next.compareAndSet(curr, succ, false, false);
 
