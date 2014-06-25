@@ -4,11 +4,9 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
 
 public class LockFreeList<T> implements Set<T> {
 	private Node<T> head;
-	
-	
+
 	@Override
-	public boolean add(T item) 
-	{		
+	public boolean add(T item) {
 		int key = item.hashCode();
 		Node head = null;
 
@@ -30,9 +28,8 @@ public class LockFreeList<T> implements Set<T> {
 			}
 		}
 	}
-	
-	public Window find(Node head, int key) 
-	{
+
+	public Window find(Node head, int key) {
 		Node pred = null, curr = null, succ = null;
 
 		Boolean marked = false;
@@ -51,7 +48,7 @@ public class LockFreeList<T> implements Set<T> {
 
 					snip = pred.next.compareAndSet(curr, succ, false, false);
 
-					if (!snip){
+					if (!snip) {
 						continue retry;
 					}
 
@@ -59,7 +56,7 @@ public class LockFreeList<T> implements Set<T> {
 					succ = curr.next.get(marked);
 				}
 
-				if (curr.key >= key){
+				if (curr.key >= key) {
 
 					return new Window(pred, curr);
 				}
@@ -69,27 +66,49 @@ public class LockFreeList<T> implements Set<T> {
 			}
 		}
 	}
-	
 
 	@Override
 	public boolean remove(T item) {
-		// TODO Auto-generated method stub
+		int key = item.hashCode();
+		boolean snip;
+		
+		while (true) {
+			Window window = find(head, key);
+			Node<T> pred = window.pred;
+			Node<T> curr = window.curr;
+			
+			if (curr.key != key) {
+				return false;
+			} else {
+				Node<T> succ = curr.next.getReference();
+				snip = curr.next.attemptMark(succ, true);
+				
+				if (!snip) {
+					continue;
+				}
+				
+				pred.next.compareAndSet(curr, succ, false, false);
+				
+				return true;
+			}
+			
+		}
+		
 		return false;
 	}
-	
-	
 
 	@Override
 	public boolean contains(T item) {
-		boolean[] marked = {false};
+		boolean[] marked = { false };
 		int key = item.hashCode();
 		Node<T> curr = head;
-		
+
 		while (curr.key < key) {
+			curr = curr.next.getReference();
 			Node<T> succ = curr.next.get(marked);
 		}
-		
+
 		return (curr.key == key && !marked[0]);
 	}
-	
+
 }
