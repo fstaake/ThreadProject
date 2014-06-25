@@ -19,9 +19,9 @@ public class NonBlockingSynchronisation {
 		System.out.println(lockFreeList.add(1));
 		System.out.println(lockFreeList.add(3));
 		System.out.println(lockFreeList.add(2));
-		boolean result = lockFreeList.add(1);
+		System.out.println(lockFreeList.add(1));
 		
-		System.out.println(result);
+		System.out.println(lockFreeList.toString());
 	}
 
 }
