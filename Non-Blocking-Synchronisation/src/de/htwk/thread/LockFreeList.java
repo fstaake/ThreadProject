@@ -3,7 +3,7 @@ package de.htwk.thread;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 
 public class LockFreeList<T> implements Set<T> {
-	// private Node head;
+	private Node<T> head;
 	
 	
 	@Override
@@ -76,19 +76,20 @@ public class LockFreeList<T> implements Set<T> {
 		// TODO Auto-generated method stub
 		return false;
 	}
+	
+	
 
 	@Override
 	public boolean contains(T item) {
-		/*boolean marked[] = false{};
+		boolean[] marked = {false};
 		int key = item.hashCode();
-		Node curr = head;
+		Node<T> curr = head;
 		
 		while (curr.key < key) {
-			Node succ = curr.next.get(marked);
+			Node<T> succ = curr.next.get(marked);
 		}
 		
-		return (curr.key == key && !marked[0]);*/
-		return false;
+		return (curr.key == key && !marked[0]);
 	}
 	
 }
