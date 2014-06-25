@@ -3,25 +3,25 @@ package de.htwk.thread;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 
 public class LockFreeList<T> implements Set<T> {
-	
+
 	private Node<T> head;
-	
+
 	class Window {
-		 public Node<T> pred;
-		 public Node<T> curr;
-		 Window(Node<T> pred, Node<T> curr) {
-			 this.pred = pred;
-			 this.curr = curr;
-		 }
+		public Node<T> pred;
+		public Node<T> curr;
+
+		Window(Node<T> pred, Node<T> curr) {
+			this.pred = pred;
+			this.curr = curr;
+		}
 	}
-	
+
 	@Override
 	public boolean add(T item) {
 		int key = item.hashCode();
-		Node<T> head = null;
 
 		while (true) {
-			Window window = find(head, key);
+			Window window = find(this.head, key);
 
 			Node<T> pred = window.pred, curr = window.curr;
 
@@ -39,12 +39,10 @@ public class LockFreeList<T> implements Set<T> {
 		}
 	}
 
-
-
 	public Window find(Node<T> head, int key) {
 		Node<T> pred = null, curr = null, succ = null;
 
-		boolean[] marked = {false};
+		boolean[] marked = { false };
 		boolean snip;
 
 		retry: while (true) {
@@ -83,41 +81,38 @@ public class LockFreeList<T> implements Set<T> {
 	public boolean remove(T item) {
 		int key = item.hashCode();
 		boolean snip;
-		
+
 		while (true) {
-			Window window = find(head, key);
+			Window window = find(this.head, key);
 			Node<T> pred = window.pred;
 			Node<T> curr = window.curr;
-			
+
 			if (curr.key != key) {
 				return false;
 			} else {
 				Node<T> succ = curr.next.getReference();
 				snip = curr.next.attemptMark(succ, true);
-				
+
 				if (!snip) {
 					continue;
 				}
-				
+
 				pred.next.compareAndSet(curr, succ, false, false);
-				
+
 				return true;
 			}
-			
 		}
-		
-		//return false;
 	}
 
 	@Override
 	public boolean contains(T item) {
 		boolean[] marked = { false };
 		int key = item.hashCode();
-		Node<T> curr = head;
+		Node<T> curr = this.head;
 
 		while (curr.key < key) {
 			curr = curr.next.getReference();
-			Node<T> succ = curr.next.get(marked);
+			curr.next.get(marked);
 		}
 
 		return (curr.key == key && !marked[0]);
