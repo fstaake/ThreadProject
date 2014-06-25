@@ -1,13 +1,7 @@
 package de.htwk.thread;
 
-/**
- * 
- * @author Denny Hecht
- *
- * @param <T>
- */
 public class LockFreeList<T> implements Set<T> {
-	private Node head;
+	// private Node head;
 	
 	
 	@Override
@@ -24,7 +18,7 @@ public class LockFreeList<T> implements Set<T> {
 
 	@Override
 	public boolean contains(T item) {
-		boolean marked[] = false{};
+		/*boolean marked[] = false{};
 		int key = item.hashCode();
 		Node curr = head;
 		
@@ -32,7 +26,8 @@ public class LockFreeList<T> implements Set<T> {
 			Node succ = curr.next.get(marked);
 		}
 		
-		return (curr.key == key && !marked[0]);
+		return (curr.key == key && !marked[0]);*/
+		return false;
 	}
 	
 }
