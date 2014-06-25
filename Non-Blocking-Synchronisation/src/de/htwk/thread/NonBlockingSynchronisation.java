@@ -14,8 +14,7 @@ public class NonBlockingSynchronisation {
 	 *            not in use
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		// Erdbeerkäse
 	}
 
 }
