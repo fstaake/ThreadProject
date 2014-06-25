@@ -3,12 +3,21 @@ package de.htwk.thread;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 
 public class LockFreeList<T> implements Set<T> {
+	
 	private Node<T> head;
+	
+	class Window {
+		 public Node<T> pred;
+		 public Node<T> curr;
+		 Window(Node<T> pred, Node<T> curr) {
+			 this.pred = pred;
+			 this.curr = curr;
+		 }
+	}
 	
 	
 	@Override
-	public boolean add(T item) 
-	{		
+	public boolean add(T item) {		
 		int key = item.hashCode();
 		Node head = null;
 
@@ -51,7 +60,7 @@ public class LockFreeList<T> implements Set<T> {
 
 					snip = pred.next.compareAndSet(curr, succ, false, false);
 
-					if (!snip){
+					if (!snip) {
 						continue retry;
 					}
 
@@ -59,7 +68,7 @@ public class LockFreeList<T> implements Set<T> {
 					succ = curr.next.get(marked);
 				}
 
-				if (curr.key >= key){
+				if (curr.key >= key) {
 
 					return new Window(pred, curr);
 				}
