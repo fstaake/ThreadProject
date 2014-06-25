@@ -4,7 +4,15 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
 
 public class LockFreeList<T> implements Set<T> {
 
-	private Node<T> head;
+	private Node<T> head;	
+	
+	public LockFreeList() {
+		this.head      = new Node<T>(null, Integer.MIN_VALUE);
+		this.head.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MIN_VALUE), false);
+		
+		Node<T> node = this.head.next.getReference();
+		node.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);		
+	}
 
 	class Window {
 		public Node<T> pred;
@@ -28,7 +36,7 @@ public class LockFreeList<T> implements Set<T> {
 			if (curr.key == key) {
 				return false;
 			} else {
-				Node<T> node = new Node<T>(item);
+				Node<T> node = new Node<T>(item, key);
 
 				node.next = new AtomicMarkableReference<Node<T>>(curr, false);
 
