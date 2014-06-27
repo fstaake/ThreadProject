@@ -3,7 +3,7 @@ package de.htwk.thread;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 
 public class LockFreeList<T> implements Set<T> {
-
+	
 	private Node<T> head;
 
 	public LockFreeList() {
