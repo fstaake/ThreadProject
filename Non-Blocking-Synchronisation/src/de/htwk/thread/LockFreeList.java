@@ -29,14 +29,15 @@ public class LockFreeList<T> implements Set<T> {
 		while (true) {
 			Window window = find(this.head, key);
 
-			Node<T> pred = window.pred, curr = window.curr;
+			Node<T> pred = window.pred;
+			Node<T> curr = window.curr;
 
 			if (curr.key == key) {
 				return false;
 			} else {
-				Node<T> node = new Node<T>(item, key);
+				Node<T> node = new Node<>(item, key);
 
-				node.next = new AtomicMarkableReference<Node<T>>(curr, false);
+				node.next = new AtomicMarkableReference<>(curr, false);
 
 				if (pred.next.compareAndSet(curr, node, false, false)) {
 					return true;
@@ -46,7 +47,9 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	public Window find(Node<T> head, int key) {
-		Node<T> pred = null, curr = null, succ = null;
+		Node<T> pred = null;
+		Node<T> curr = null;
+		Node<T> succ = null;
 
 		boolean[] marked = { false };
 		boolean snip;
