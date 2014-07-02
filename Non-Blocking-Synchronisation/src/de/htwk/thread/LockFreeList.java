@@ -42,23 +42,25 @@ public class LockFreeList<T> implements Set<T> {
 		}
 	}
 	
-	private boolean insertNewNodeBetweenGivenNodes(Node<T> previousNode, 
-			Node<T> currentNode, T item, int key) {
+	private boolean insertNewNodeBetweenGivenNodes(Node<T> previousNode, Node<T> currentNode,
+                                                   T item, int key) {
 		Node<T> node = new Node<T>(item, key);
-
+		
 		node.next = new AtomicMarkableReference<Node<T>>(currentNode, false);
-
+		
 		return previousNode.next.compareAndSet(currentNode, node, false, false);
 	}
 
 	public Window find(Node<T> head, int key) {
-		Node<T> pred = null, curr = null, succ = null;
+		Node<T> pred = null;
+		Node<T> curr = null;
+		Node<T> succ = null;
 
 		boolean[] marked = { false };
 		boolean snip = true;
-
+		
 		while (true) {
-
+			
 			pred = head;
 			curr = pred.next.getReference();
 
@@ -69,24 +71,20 @@ public class LockFreeList<T> implements Set<T> {
 
 					snip = pred.next.compareAndSet(curr, succ, false, false);
 
-					if (!snip) {
-						break;
+					if (snip) {
+						curr = succ;
+						succ = curr.next.get(marked);
 					}
-
-					curr = succ;
-					succ = curr.next.get(marked);
 				}
 				
-				if (!snip) {
-					break;
+				if (snip) {
+    				if (curr.key >= key) {
+    					return new Window(pred, curr);
+    				}
+    				
+    				pred = curr;
+    				curr = succ;
 				}
-
-				if (curr.key >= key) {
-					return new Window(pred, curr);
-				}
-
-				pred = curr;
-				curr = succ;
 			}
 		}
 	}
