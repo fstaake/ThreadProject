@@ -11,5 +11,4 @@ public class Node<T> {
 		this.item = item;
 		this.key = key;
 	}
-
 }

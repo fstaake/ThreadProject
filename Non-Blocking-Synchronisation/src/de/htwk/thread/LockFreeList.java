@@ -7,9 +7,9 @@ public class LockFreeList<T> implements Set<T> {
 	private Node<T> head;
 
 	public LockFreeList() {
-		head = new Node<T>(null, Integer.MIN_VALUE);
-		head.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);
-		head.next.getReference().next = new AtomicMarkableReference<>(head, false);
+		this.head = new Node<T>(null, Integer.MIN_VALUE);
+		this.head.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);
+		this.head.next.getReference().next = new AtomicMarkableReference<>(this.head, false);
 	}
 
 	class Window {
@@ -45,7 +45,6 @@ public class LockFreeList<T> implements Set<T> {
 	private boolean insertNewNodeBetweenGivenNodes(Node<T> previousNode, Node<T> currentNode,
                                                    T item, int key) {
 		Node<T> node = new Node<T>(item, key);
-		
 		node.next = new AtomicMarkableReference<Node<T>>(currentNode, false);
 		
 		return previousNode.next.compareAndSet(currentNode, node, false, false);
@@ -105,13 +104,10 @@ public class LockFreeList<T> implements Set<T> {
 				Node<T> succ = curr.next.getReference();
 				snip = curr.next.attemptMark(succ, true);
 
-				if (!snip) {
-					continue;
+				if (snip) {
+					pred.next.compareAndSet(curr, succ, false, false);
+					return true;
 				}
-
-				pred.next.compareAndSet(curr, succ, false, false);
-
-				return true;
 			}
 		}
 	}
