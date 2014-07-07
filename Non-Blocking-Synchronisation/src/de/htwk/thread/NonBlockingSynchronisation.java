@@ -3,9 +3,6 @@
  */
 package de.htwk.thread;
 
-import java.util.LinkedList;
-import java.util.List;
-
 /**
  * @author Denny Hecht
  *
