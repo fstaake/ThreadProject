@@ -139,11 +139,15 @@ public class LockFreeList<T> implements Set<T> {
 			curr.next.get(marked);
 			
 			if (!marked[0] && curr.key < Integer.MAX_VALUE) {
-				if (!firstElement) builder.append(", ");
+				if (!firstElement) {
+					builder.append(", ");
+				}
+				
 				builder.append(curr.item.toString());
 				firstElement = false;
 			}
 		}
+		
 		builder.append("}");
 		return builder.toString();
 	}

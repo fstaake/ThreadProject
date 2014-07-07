@@ -26,8 +26,14 @@ public class NonBlockingSynchronisation {
 			new Thread(() -> lockFreeList.add(5)),
 			new Thread(() -> lockFreeList.remove(3))
 		};
-		for (Thread thread : threads) thread.start();
-		for (Thread thread : threads) thread.join();
+		
+		for (Thread thread : threads) {
+			thread.start();
+		}
+		
+		for (Thread thread : threads) {
+			thread.join();
+		}
 		
 		System.out.println(lockFreeList);
 	}
