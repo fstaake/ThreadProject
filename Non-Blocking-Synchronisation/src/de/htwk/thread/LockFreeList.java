@@ -33,7 +33,7 @@ public class LockFreeList<T> implements Set<T> {
 	 * appropriate nodes.
 	 * Returns false if a node with the given value is already 
 	 * inserted into the set or the value couldn't be added.
-	 * Otherwise returns true. 
+	 * Returns true otherwise. 
 	 * 
 	 * @item	
 	 * 		given value of the node, that should be added
@@ -44,7 +44,7 @@ public class LockFreeList<T> implements Set<T> {
 	public boolean add(T item) {
 		int key = item.hashCode();
 
-		/**
+		/*
 		 * Searches for the node with a greater value
 		 * than the given one.
 		 * If insertion doesn't succeeded caused by an access
@@ -73,6 +73,12 @@ public class LockFreeList<T> implements Set<T> {
 	
 	/**
 	 * Tries to insert a new node between two appropriate nodes.
+	 * Creates new node and sets its reference to given current node.
+	 * After that tries to redirect reference of previous node from
+	 * current node to new node. 
+	 * Returns true, if succeeding.
+	 * Returns false otherwise.
+	 * 
 	 * @param previous
 	 * @param current
 	 * @param item
@@ -83,50 +89,47 @@ public class LockFreeList<T> implements Set<T> {
 	 */
 	private boolean insertNewNodeBetweenGivenNodes(Node<T> previous, Node<T> current,
                                                    T item, int key) {
-		Node<T> node = new Node<>(item, key);
-		node.next = new AtomicMarkableReference<Node<T>>(current, false);
+		Node<T> newNode = new Node<>(item, key);
+		newNode.next = new AtomicMarkableReference<Node<T>>(current, false);
 		
-		/**
-		 * "Atomically sets the value of both the reference and 
-		 * mark to the given update values if the current 
-		 * reference is == to the expected reference and the 
-		 * current mark is equal to the expected mark."
-		 * Returns true if succeeded, otherwise false.
-		 */
-		return tryRedirectLinkToNextNode(previous, current, node);
+		return tryRedirectLinkToNextNode(previous, current, newNode);
 	}
 	
+	/**
+	 * Tries to redirect the reference of the previous node
+	 * to the next node.
+	 * Returns true, if succeeding.
+	 * Returns false otherwise.
+	 * 
+	 * @param previous
+	 * @param current
+	 * @param next
+	 * @return
+	 */
 	private boolean tryRedirectLinkToNextNode(Node<T> previous, Node<T> current,
-			Node<T> next) {
-		
-		/**
-		 * "call[ing] compareAndSet() to attempt to physically 
-		 * remove the node by setting [...] 
-		 * next field [of the previous node] to 
-		 * [the current nodes] next field."
-		 */
+			Node<T> next) {	
 		return previous.next.compareAndSet(current, next, false, false);
 	}
 
 	/**
-	 * "Returns a structure containing the nodes on 
-	 * either side of the key. 
-	 * It Removes marked nodes when it encounters them."
-	 *  
+	 * Returns a pair of nodes containing the previous
+	 * and next node, that goes with the key. 
+	 * It Removes marked nodes when it founds them.
+	 *   
 	 * @param head
-	 * 			node, where the traverses begins
+	 * 			node, where traversing begins
 	 * @param key
-	 * 			hashcode of value of the node, that should be find
+	 * 			hashcode of item of the node, that should be find
 	 * @return
 	 */
 	private Window find(Node<T> head, int key) {
 		Node<T> previous = null;
 		Node<T> current = null;
 
-		/**
-		 * "Traverses the list, seeking to set the previous node to the 
-		 * node with the largest key less than [the given key], and the current node
-		 * to the node with the least key greater than or equal to [the given key]."
+		/*
+		 * Traverses the list, searching for a previous node, 
+		 * with a key less than given key, and a next node, 
+		 * with a key greater than or equal to given key. 
 		 */
 		while (true) {
 			previous = head;
@@ -141,6 +144,11 @@ public class LockFreeList<T> implements Set<T> {
 	}
 	
 	/**
+	 * Searches for the appropriate node with the 
+	 * smallest key greater or equal to the given key.
+	 * Returns a pair of nodes containing the previous
+	 * and next node, that goes with the key.
+	 * Returns null, if a problem occurs.
 	 * 
 	 * @param previous
 	 * @param current
@@ -152,20 +160,22 @@ public class LockFreeList<T> implements Set<T> {
 		boolean deleted;	
 		Node<T> next = null;
 		
-		/**
-		 * traverses the set and proofs ....
+		/*
+		 * Traverses the list and proofs every current node
+		 * whether its reference is marked or not.
 		 */
 		while (true) {
 			next = current.next.get(marked);
 
-			/** 
-			 * "If [current node is marked], it 
-			 * [...] tr[ies] to redirect the next field 
-			 * [of the previous node]" to the next node.
+			/*
+			 * If reference is marked, it tries to
+			 * redirect the reference of the previous node
+			 * to the next node.
 			 */
 			while (marked[0]) {
 				deleted = tryRedirectLinkToNextNode(previous, current, next);
 				
+				//If deletion failed, it returns null.
 				if (!deleted) {
 					return null;
 				}
@@ -175,7 +185,7 @@ public class LockFreeList<T> implements Set<T> {
 			}
 
 			/**
-			 * If the deletion succeeded and the current nodes key is
+			 * If deletion succeeded and the current nodes key is
 			 * greater than or equal to the given key, it returns
 			 * the founded pair of nodes. 
 			 * Otherwise the traversal continues.
@@ -215,45 +225,39 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * Traverses the list once [...] and
-	 * returns true if the node it was searching 
-	 * for is present and unmarked, and false otherwise.  
+	 * Traverses the list, searching for a 
+	 * node with an item equal to the given item.
+	 * Returns true if the node it was searching 
+	 * for is present and unmarked.
+	 * Returns false otherwise.  
 	 */
 	@Override
-	public boolean contains(T item) {
-		
+	public boolean contains(T item) {		
 		boolean[] marked = { false };
 		int key = item.hashCode();
 		
 		Node<T> current = this.head;
 		
-		if(current.key < key){
-			traversingSetForKey(current, key, marked);
+		if(current.key < key) {
+			/*
+			 * Traversing list while founded 
+			 * items are less than given items
+			 */
+			while (current.key < key) {
+				current = current.next.getReference();
+				current.next.get(marked);
+			}
 		}
 
-		/**
+		/*
 		 * Returns whether the current nodes key is equal
 		 * to the given key and the current node is not marked.
 		 */		
 		return (current.key == key && !marked[0]);
 	}
-		
-	/**
-	 * Traversal moves to the next node while  
-	 * next nodes key is less then given key.
-	 * While traversing it tests whether current 
-	 * node is marked.
-	 */
-	private void traversingSetForKey(Node<T> current, int key, boolean[] marked) {
-		
-		while (current.key < key) {
-			current = current.next.getReference();
-			current.next.get(marked);
-		}		
-	}
 
 	/**
-	 * 
+	 * prints all nodes of the list, also logically deleted nodes
 	 */
 	public String printList() {
 		StringBuilder builder = new StringBuilder("{");
@@ -261,6 +265,8 @@ public class LockFreeList<T> implements Set<T> {
 		Node<T> curr = this.head;
 		
 		boolean firstElement = true;
+		
+		//traverses the list until the guard is reached
 		while (curr.key < Integer.MAX_VALUE) {
 			curr = curr.next.getReference();
 			reference = curr.next;
