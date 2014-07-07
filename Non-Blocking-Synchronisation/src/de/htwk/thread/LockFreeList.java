@@ -7,30 +7,36 @@ public class LockFreeList<T> implements Set<T> {
 	private Node<T> head;
 
 	public LockFreeList() {
-		this.head = new Node<T>(null, Integer.MIN_VALUE);
+		this.head = new Node<>(null, Integer.MIN_VALUE);
 		this.head.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);
 		this.head.next.getReference().next = new AtomicMarkableReference<>(this.head, false);
 	}
 
+	/** Data class that represents a section of the list, delimited by the nodes {@code previous}
+	 * and {@code current}. Objects of this class are returned by the {@code find} method.
+	 * 
+	 * @author Felix
+	 *
+	 */
 	class Window {
-		public Node<T> pred;
-		public Node<T> curr;
-
-		Window(Node<T> pred, Node<T> curr) {
-			this.pred = pred;
-			this.curr = curr;
+		public final Node<T> previous;
+		public final Node<T> current;
+		
+		Window(Node<T> previous, Node<T> current) {
+			this.previous = previous;
+			this.current  = current;
 		}
 	}
 
 	@Override
 	public boolean add(T item) {
-		int key = item.hashCode();
+		int key = Node.getKey(item);
 
 		while (true) {
 			Window window = find(this.head, key);
 
-			Node<T> pred = window.pred;
-			Node<T> curr = window.curr;
+			Node<T> pred = window.previous;
+			Node<T> curr = window.current;
 
 			if (curr.key == key) {
 				return false;
@@ -49,7 +55,7 @@ public class LockFreeList<T> implements Set<T> {
 		
 		return previousNode.next.compareAndSet(currentNode, node, false, false);
 	}
-
+	
 	public Window find(Node<T> head, int key) {
 		Node<T> pred = null;
 		Node<T> curr = null;
@@ -87,35 +93,51 @@ public class LockFreeList<T> implements Set<T> {
 			}
 		}
 	}
-
+	
+	/** Removes the specified item from the list.<br><br>
+	 * This method tries to locate {@code item} in the list using the {@code find} method,
+	 * which, as a side effect, physically removes all nodes marked as deleted on the way.
+	 * If the {@code current} node returned by {@code find} doesn't have a key that matches
+	 * that of {@code item}, {@code item} wasn't found in the list, and the method terminates.<br>
+	 * Otherwise, the node containing {@code item} is marked as deleted; if this fails
+	 * because the list has changed in the meantime, the method starts over, calling {@code find}
+	 * again. Finally, one try to physically remove the node is made and the method ends.
+	 * 
+	 * @param item The item to be removed.
+	 * @return {@code true} if the item was successfully removed by the method, {@code false}
+	 * if it could not be found in the list.
+	 */
 	@Override
 	public boolean remove(T item) {
-		int key = item.hashCode();
-		boolean snip;
-
+		int key = Node.getKey(item);
+		
 		while (true) {
 			Window window = find(this.head, key);
-			Node<T> pred = window.pred;
-			Node<T> curr = window.curr;
-
-			if (curr.key != key) {
+			Node<T> previous = window.previous;
+			Node<T> current  = window.current;
+			
+			if (current.key != key) {
+				// a node containing the requested item was not found -> nothing to delete
 				return false;
 			} else {
-				Node<T> succ = curr.next.getReference();
-				snip = curr.next.attemptMark(succ, true);
-
-				if (snip) {
-					pred.next.compareAndSet(curr, succ, false, false);
+				Node<T> next = current.next.getReference();
+				
+				// attempt to mark the node, making sure the reference to next hasn't changed
+				// (otherwise find has to be done anew)
+				if (current.next.attemptMark(next, true) == true) {
+					// a single attempt to physically remove the node; failure gets ignored,
+					// as it will be removed as soon as the find method iterates over it anyway 
+					previous.next.compareAndSet(current, next, false, false);
 					return true;
 				}
 			}
 		}
 	}
-
+	
 	@Override
 	public boolean contains(T item) {
 		boolean[] marked = { false };
-		int key = item.hashCode();
+		int key = Node.getKey(item);
 		Node<T> curr = this.head;
 
 		while (curr.key < key) {
@@ -125,26 +147,37 @@ public class LockFreeList<T> implements Set<T> {
 
 		return (curr.key == key && !marked[0]);
 	}
-		
+	
+	/** Returns a String representation of the list.<br><br>
+	 * 
+	 * This is done by traversing the list from start to end, appending the {@code item}
+	 * String representations of any unmarked nodes encountered, separated by a comma, to a
+	 * {@code StringBuilder} instance. The resulting String, enclosed in braces, is then returned. 
+	 * 
+	 * @return String representation of the list.
+	 */
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder("{");
 		
 		boolean[] marked = { false };
-		Node<T> curr = this.head;
+		Node<T> current = this.head;
 		
 		boolean firstElement = true;
-		while (curr.key < Integer.MAX_VALUE) {
-			curr = curr.next.getReference();
-			curr.next.get(marked);
+		// iterate over the nodes in the list; abort when sentinel node at the end is reached
+		while (current.key < Integer.MAX_VALUE) {
+			current = current.next.getReference();
+			current.next.get(marked);
 			
-			if (!marked[0] && curr.key < Integer.MAX_VALUE) {
+			// add item to the string representation if node is neither marked nor the tail sentinel
+			if (!marked[0] && current.key < Integer.MAX_VALUE) {
 				if (!firstElement) builder.append(", ");
-				builder.append(curr.item.toString());
+				builder.append(current.item.toString());
 				firstElement = false;
 			}
 		}
 		builder.append("}");
+		
 		return builder.toString();
 	}
 }
