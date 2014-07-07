@@ -129,21 +129,23 @@ public class LockFreeList<T> implements Set<T> {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder("{");
-		
-		boolean[] marked = { false };
+		AtomicMarkableReference<Node<T>> reference;
 		Node<T> curr = this.head;
 		
 		boolean firstElement = true;
 		while (curr.key < Integer.MAX_VALUE) {
 			curr = curr.next.getReference();
-			curr.next.get(marked);
+			reference = curr.next;
 			
-			if (!marked[0] && curr.key < Integer.MAX_VALUE) {
+			if (curr.key < Integer.MAX_VALUE) {
 				if (!firstElement) {
 					builder.append(", ");
 				}
 				
 				builder.append(curr.item.toString());
+				builder.append("(");
+				builder.append(reference.isMarked());
+				builder.append(")");
 				firstElement = false;
 			}
 		}
