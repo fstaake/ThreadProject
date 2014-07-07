@@ -4,12 +4,14 @@
 package de.htwk.thread;
 
 /**
- * @author Denny Hecht
+ * Main
+ * 
+ * @author Denny Hecht, Franziska Staake, Felix Hain
  *
  */
 public class NonBlockingSynchronisation {
 	private static LockFreeList<Integer> lockFreeList = null;
-	
+
 	/**
 	 * @param args
 	 *            not in use

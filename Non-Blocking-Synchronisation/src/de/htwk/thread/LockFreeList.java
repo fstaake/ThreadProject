@@ -3,7 +3,12 @@ package de.htwk.thread;
 import java.util.concurrent.atomic.AtomicMarkableReference;
 
 
-
+/**
+ * 
+ * @author Denny Hecht, Franziska Staake, Felix Hain
+ *
+ * @param <T>
+ */
 public class LockFreeList<T> implements Set<T> {
 	
 	private Node<T> head;
