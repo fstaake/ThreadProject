@@ -14,7 +14,7 @@ public class LockFreeList<T> implements Set<T> {
 	private Node<T> head;
 
 	/**
-	 * Constructor
+	 * Creates a new list containing sentinel nodes but no data.
 	 */
 	public LockFreeList() {
 		// head sentinel
@@ -104,7 +104,6 @@ public class LockFreeList<T> implements Set<T> {
 		return tryRedirectLinkToNextNode(previous, current, newNode);
 	}
 	
-
 	/**
 	 * Tries to redirect the reference of the previous node
 	 * to the next node.
@@ -168,8 +167,7 @@ public class LockFreeList<T> implements Set<T> {
 	private Window findAppropriateNode (Node<T> previous, Node<T> current, int key) {
 		boolean[] marked = {false};
 		boolean deleted;	
-		Node<T> next = null;
-		
+		Node<T> next = null;		
 
 		/*
 		 * Traverses the list and proves every current node
@@ -195,7 +193,7 @@ public class LockFreeList<T> implements Set<T> {
 				next = current.next.get(marked);
 			}
 
-			/**
+			/*
 			 * If deletion succeeded and the current nodes key is
 			 * greater than or equal to the given key, it returns
 			 * the founded pair of nodes. 
