@@ -2,6 +2,8 @@ package de.htwk.thread;
 
 import java.util.concurrent.atomic.AtomicMarkableReference;
 
+
+
 public class LockFreeList<T> implements Set<T> {
 	
 	private Node<T> head;
@@ -10,21 +12,25 @@ public class LockFreeList<T> implements Set<T> {
 	 * Constructor
 	 */
 	public LockFreeList() {
-		//head
-		this.head = new Node<T>(null, Integer.MIN_VALUE);
-		//guard
+		// head sentinel
+		this.head = new Node<>(null, Integer.MIN_VALUE);
+		// tail sentinel
 		this.head.next = new AtomicMarkableReference<>(new Node<>(null, Integer.MAX_VALUE), false);
 		this.head.next.getReference().next = new AtomicMarkableReference<>(this.head, false);
 	}
 
+	/** Data class that represents a section of the list, delimited by the nodes {@code previous}
+	 * and {@code current}. Objects of this class are returned by the {@code find} method.
+	 * 
+	 * @author Felix
+	 */
 	class Window {
+		public final Node<T> previous;
+		public final Node<T> current;
 		
-		public Node<T> pred;
-		public Node<T> curr;
-
-		Window(Node<T> pred, Node<T> curr) {
-			this.pred = pred;
-			this.curr = curr;
+		Window(Node<T> previous, Node<T> current) {
+			this.previous = previous;
+			this.current  = current;
 		}
 	}
 
@@ -42,8 +48,8 @@ public class LockFreeList<T> implements Set<T> {
 	 */
 	@Override
 	public boolean add(T item) {
-		int key = item.hashCode();
-
+		int key = Node.getKey(item);
+		
 		/**
 		 * Searches for the node with a greater value
 		 * than the given one.
@@ -54,10 +60,10 @@ public class LockFreeList<T> implements Set<T> {
 		while (true) {
 			//Searching for the node with a smaller value
 			Window window = find(this.head, key);
-
-			Node<T> previous = window.pred;
-			Node<T> current = window.curr;
-
+			
+			Node<T> previous = window.previous;
+			Node<T> current  = window.current;
+			
 			//Given value already exists in set?
 			if (current.key == key) {
 				//new node can't be inserted
@@ -78,11 +84,10 @@ public class LockFreeList<T> implements Set<T> {
 	 * @param item
 	 * 			given value of new node
 	 * @param key
-	 * 			hashcode of given value of new node
+	 * 			key of given value of new node
 	 * @return
 	 */
-	private boolean insertNewNodeBetweenGivenNodes(Node<T> previous, Node<T> current,
-                                                   T item, int key) {
+	private boolean insertNewNodeBetweenGivenNodes(Node<T> previous, Node<T> current, T item, int key) {
 		Node<T> node = new Node<>(item, key);
 		node.next = new AtomicMarkableReference<Node<T>>(current, false);
 		
@@ -96,9 +101,7 @@ public class LockFreeList<T> implements Set<T> {
 		return tryRedirectLinkToNextNode(previous, current, node);
 	}
 	
-	private boolean tryRedirectLinkToNextNode(Node<T> previous, Node<T> current,
-			Node<T> next) {
-		
+	private boolean tryRedirectLinkToNextNode(Node<T> previous, Node<T> current, Node<T> next) {
 		/**
 		 * "call[ing] compareAndSet() to attempt to physically 
 		 * remove the node by setting [...] 
@@ -121,8 +124,8 @@ public class LockFreeList<T> implements Set<T> {
 	 */
 	private Window find(Node<T> head, int key) {
 		Node<T> previous = null;
-		Node<T> current = null;
-
+		Node<T> current  = null;
+		
 		/**
 		 * "Traverses the list, seeking to set the previous node to the 
 		 * node with the largest key less than [the given key], and the current node
@@ -153,11 +156,11 @@ public class LockFreeList<T> implements Set<T> {
 		Node<T> next = null;
 		
 		/**
-		 * traverses the set and proofs ....
+		 * traverses the set and proves...
 		 */
 		while (true) {
 			next = current.next.get(marked);
-
+			
 			/** 
 			 * "If [current node is marked], it 
 			 * [...] tr[ies] to redirect the next field 
@@ -190,30 +193,46 @@ public class LockFreeList<T> implements Set<T> {
 		
 	}	
 
+	/** Removes the specified item from the list.<br><br>
+	 * This method tries to locate {@code item} in the list using the {@code find} method,
+	 * which, as a side effect, physically removes all nodes marked as deleted on the way.
+	 * If the {@code current} node returned by {@code find} doesn't have a key that matches
+	 * that of {@code item}, {@code item} wasn't found in the list, and the method terminates.<br>
+	 * Otherwise, the node containing {@code item} is marked as deleted; if this fails
+	 * because the list has changed in the meantime, the method starts over, calling {@code find}
+	 * again. Finally, one try to physically remove the node is made and the method ends.
+	 * 
+	 * @param item The item to be removed.
+	 * @return {@code true} if the item was successfully removed by the method, {@code false}
+	 * if it could not be found in the list.
+	 */
 	@Override
 	public boolean remove(T item) {
-		int key = item.hashCode();
-		boolean snip;
-
+		int key = Node.getKey(item);
+		
 		while (true) {
 			Window window = find(this.head, key);
-			Node<T> pred = window.pred;
-			Node<T> curr = window.curr;
-
-			if (curr.key != key) {
+			Node<T> previous = window.previous;
+			Node<T> current  = window.current;
+			
+			if (current.key != key) {
+				// a node containing the requested item was not found -> nothing to delete
 				return false;
 			} else {
-				Node<T> succ = curr.next.getReference();
-				snip = curr.next.attemptMark(succ, true);
-
-				if (snip) {
-					tryRedirectLinkToNextNode(pred, curr, succ);
+				Node<T> next = current.next.getReference();
+				
+				// attempt to mark the node, making sure the reference to next hasn't changed
+				// (otherwise find has to be done anew)
+				if (current.next.attemptMark(next, true) == true) {
+					// a single attempt to physically remove the node; failure gets ignored,
+					// as it will be removed as soon as the find method iterates over it anyway 
+					tryRedirectLinkToNextNode(previous, current, next);
 					return true;
 				}
 			}
 		}
 	}
-
+	
 	/**
 	 * Traverses the list once [...] and
 	 * returns true if the node it was searching 
@@ -221,9 +240,8 @@ public class LockFreeList<T> implements Set<T> {
 	 */
 	@Override
 	public boolean contains(T item) {
-		
 		boolean[] marked = { false };
-		int key = item.hashCode();
+		int key = Node.getKey(item);
 		
 		Node<T> current = this.head;
 		
@@ -237,7 +255,8 @@ public class LockFreeList<T> implements Set<T> {
 		 */		
 		return (current.key == key && !marked[0]);
 	}
-		
+	
+	
 	/**
 	 * Traversal moves to the next node while  
 	 * next nodes key is less then given key.
@@ -245,7 +264,6 @@ public class LockFreeList<T> implements Set<T> {
 	 * node is marked.
 	 */
 	private void traversingSetForKey(Node<T> current, int key, boolean[] marked) {
-		
 		while (current.key < key) {
 			current = current.next.getReference();
 			current.next.get(marked);
@@ -258,19 +276,19 @@ public class LockFreeList<T> implements Set<T> {
 	public String printList() {
 		StringBuilder builder = new StringBuilder("{");
 		AtomicMarkableReference<Node<T>> reference;
-		Node<T> curr = this.head;
+		Node<T> current = this.head;
 		
 		boolean firstElement = true;
-		while (curr.key < Integer.MAX_VALUE) {
-			curr = curr.next.getReference();
-			reference = curr.next;
+		while (current.key < Integer.MAX_VALUE) {
+			current = current.next.getReference();
+			reference = current.next;
 			
-			if (curr.key < Integer.MAX_VALUE) {
+			if (current.key < Integer.MAX_VALUE) {
 				if (!firstElement) {
 					builder.append(", ");
 				}
 				
-				builder.append(curr.item.toString());
+				builder.append(current.item.toString());
 				builder.append("(");
 				builder.append(reference.isMarked());
 				builder.append(")");
@@ -279,6 +297,40 @@ public class LockFreeList<T> implements Set<T> {
 		}
 		
 		builder.append("}");
+		
+		return builder.toString();
+	}
+	
+	/** Returns a String representation of the list.<br><br>
+	 * 
+	 * This is done by traversing the list from start to end, appending the {@code item}
+	 * String representations of any unmarked nodes encountered, separated by a comma, to a
+	 * {@code StringBuilder} instance. The resulting String, enclosed in braces, is then returned. 
+	 * 
+	 * @return String representation of the list.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder("{");
+		
+		boolean[] marked = { false };
+		Node<T> current = this.head;
+		
+		boolean firstElement = true;
+		// iterate over the nodes in the list; abort when sentinel node at the end is reached
+		while (current.key < Integer.MAX_VALUE) {
+			current = current.next.getReference();
+			current.next.get(marked);
+			
+			// add item to the string representation if node is neither marked nor the tail sentinel
+			if (!marked[0] && current.key < Integer.MAX_VALUE) {
+				if (!firstElement) builder.append(", ");
+				builder.append(current.item.toString());
+				firstElement = false;
+			}
+		}
+		builder.append("}");
+		
 		return builder.toString();
 	}
 }

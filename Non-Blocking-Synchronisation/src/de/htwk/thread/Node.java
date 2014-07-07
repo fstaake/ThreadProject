@@ -36,4 +36,8 @@ public class Node<T> {
 		this.item = item;
 		this.key = key;
 	}
+	
+	public static <T> int getKey(T item) {
+		return item.hashCode();
+	}
 }
