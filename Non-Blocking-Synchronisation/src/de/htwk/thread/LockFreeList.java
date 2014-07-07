@@ -48,7 +48,7 @@ public class LockFreeList<T> implements Set<T> {
 	 */
 	@Override
 	public boolean add(T item) {
-		int key = Node.getKey(item);
+		int key = Node.createKey(item);
 		
 		/**
 		 * Searches for the node with a greater value
@@ -208,7 +208,7 @@ public class LockFreeList<T> implements Set<T> {
 	 */
 	@Override
 	public boolean remove(T item) {
-		int key = Node.getKey(item);
+		int key = Node.createKey(item);
 		
 		while (true) {
 			Window window = find(this.head, key);
@@ -241,7 +241,7 @@ public class LockFreeList<T> implements Set<T> {
 	@Override
 	public boolean contains(T item) {
 		boolean[] marked = { false };
-		int key = Node.getKey(item);
+		int key = Node.createKey(item);
 		
 		Node<T> current = this.head;
 		

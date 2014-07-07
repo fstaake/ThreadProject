@@ -37,7 +37,12 @@ public class Node<T> {
 		this.key = key;
 	}
 	
-	public static <T> int getKey(T item) {
+	/**
+	 * 
+	 * @param item
+	 * @return
+	 */
+	public static <T> int createKey(T item) {
 		return item.hashCode();
 	}
 }
