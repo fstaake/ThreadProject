@@ -16,9 +16,7 @@ import de.htwk.thread.LockFreeList;
  */
 public class TestLockFreeList extends AbstractBenchmark {
 	private LockFreeList<Integer> lockFreeList;
-	private static final String RESULT = "{2(false), 4(false), 6(false), 8(false), 10(false)}";
-	// private static final String FELIX = "{2, 4, 6, 8, 10}";
-	private static int COUNTER = 1;
+	private static final String FELIX = "{2, 4, 6, 8, 10}";
 	
 	@Before
 	public void before() {
@@ -34,7 +32,7 @@ public class TestLockFreeList extends AbstractBenchmark {
 		this.lockFreeList.add(9);
 	}
 	
-	@BenchmarkOptions(benchmarkRounds = 500, warmupRounds = 0)
+	@BenchmarkOptions(benchmarkRounds = 50000, warmupRounds = 0)
 	@Test
 	public void testLockFreeList() throws InterruptedException {
 		Thread[] threads = new Thread[] { new Thread(() -> operationsThread1()), new Thread(() -> operationsThread2()) };
@@ -47,8 +45,7 @@ public class TestLockFreeList extends AbstractBenchmark {
 			thread.join();
 		}
 		
-		System.out.println(COUNTER++ + ": " + this.lockFreeList.printList());
-		Assert.assertEquals(RESULT, this.lockFreeList.printList());
+		Assert.assertEquals(FELIX, this.lockFreeList.toString());
 	}
 	
 	private void operationsThread1() {
