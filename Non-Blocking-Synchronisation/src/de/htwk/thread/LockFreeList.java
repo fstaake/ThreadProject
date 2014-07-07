@@ -252,8 +252,10 @@ public class LockFreeList<T> implements Set<T> {
 		}		
 	}
 
-	@Override
-	public String toString() {
+	/**
+	 * 
+	 */
+	public String printList() {
 		StringBuilder builder = new StringBuilder("{");
 		AtomicMarkableReference<Node<T>> reference;
 		Node<T> curr = this.head;

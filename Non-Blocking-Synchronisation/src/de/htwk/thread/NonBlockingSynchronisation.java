@@ -33,7 +33,7 @@ public class NonBlockingSynchronisation {
 			thread.join();
 		}
 
-		System.out.println(lockFreeList);
+		System.out.println(lockFreeList.printList());
 	}
 
 	private static void initLockFreeList() {
