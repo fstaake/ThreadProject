@@ -3,16 +3,13 @@
  */
 package de.htwk.thread;
 
-import java.util.LinkedList;
-import java.util.List;
-
 /**
  * @author Denny Hecht
  *
  */
 public class NonBlockingSynchronisation {
 	private static LockFreeList<Integer> lockFreeList = null;
-
+	
 	/**
 	 * @param args
 	 *            not in use
