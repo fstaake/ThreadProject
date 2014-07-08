@@ -27,7 +27,7 @@ public class LockFreeList<T> implements Set<T> {
 	 * Data class that represents a section of the list, delimited by the nodes {@code previous} and {@code current}. Objects of this class are returned by the
 	 * {@code find} method.
 	 * 
-	 * @author Felix
+	 * @author Denny Hecht, Franziska Staake, Felix Hain
 	 */
 	class Window {
 		public final Node<T> previous;

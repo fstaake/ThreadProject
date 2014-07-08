@@ -16,12 +16,12 @@ import de.htwk.thread.LockFreeList;
  */
 public class TestLockFreeList extends AbstractBenchmark {
 	private LockFreeList<Integer> lockFreeList;
-	private static final String FELIX = "{2, 4, 6, 8, 10}";
+//	private static final String FELIX = "{2, 4, 6, 8, 10}";
 	
 	@Before
 	public void before() {
 		this.lockFreeList = new LockFreeList<>();
-		initList();
+		//initList();
 	}
 	
 	private void initList() {
@@ -32,11 +32,15 @@ public class TestLockFreeList extends AbstractBenchmark {
 		this.lockFreeList.add(9);
 	}
 	
-	@BenchmarkOptions(benchmarkRounds = 50000, warmupRounds = 0)
+	@BenchmarkOptions(benchmarkRounds = 500, warmupRounds = 0)
 	@Test
 	public void testLockFreeList() throws InterruptedException {
-		Thread[] threads = new Thread[] { new Thread(() -> operationsThread1()), new Thread(() -> operationsThread2()) };
-
+		Thread[] threads = new Thread[10000];
+		for (int i = 0; i < threads.length; i++) {
+			final int x = i;
+			threads[i] = new Thread(() -> this.lockFreeList.add(x));
+		}
+		
 		for (Thread thread : threads) {
 			thread.start();
 		}
@@ -45,7 +49,20 @@ public class TestLockFreeList extends AbstractBenchmark {
 			thread.join();
 		}
 		
-		Assert.assertEquals(FELIX, this.lockFreeList.toString());
+		for (int i = 0; i < threads.length; i++) {
+			final int x = i;
+			threads[i] = new Thread(() -> this.lockFreeList.remove(x));
+		}
+		
+		for (Thread thread : threads) {
+			thread.start();
+		}
+
+		for (Thread thread : threads) {
+			thread.join();
+		}
+		System.out.println(this.lockFreeList);
+//		Assert.assertEquals(FELIX, this.lockFreeList.toString());
 	}
 	
 	private void operationsThread1() {
@@ -54,6 +71,14 @@ public class TestLockFreeList extends AbstractBenchmark {
 		this.lockFreeList.add(8);
 		this.lockFreeList.add(4);
 		this.lockFreeList.add(6);
+	}
+	
+	private void operation() {
+		this.lockFreeList.add(1);
+		this.lockFreeList.add(3);
+		this.lockFreeList.add(5);
+		this.lockFreeList.add(7);
+		this.lockFreeList.add(9);
 	}
 	
 	private void operationsThread2() {
