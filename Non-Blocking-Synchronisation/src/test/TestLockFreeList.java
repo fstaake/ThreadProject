@@ -31,7 +31,9 @@ public class TestLockFreeList extends AbstractBenchmark {
 	}
 
 	/**
-	 * This test case runs 500 times and 500 threads add his thread id and a second thread will remove this id from the {@link LockFreeList}.
+	 * This test case runs 500 times and launches two waves of 500 threads each.
+	 * Each thread from the first wave adds its respective number to the {@link LockFreeList},
+	 * each one in the second removes it again.
 	 */
 	@BenchmarkOptions(benchmarkRounds = 500, warmupRounds = 0)
 	@Test
@@ -42,8 +44,9 @@ public class TestLockFreeList extends AbstractBenchmark {
 	}
 
 	/**
-	 * This test case runs 500 times and each thread will add his own thread id. <br>
-	 * The test runs 4*500 threads and each 4th thread will add the same number, but the {@link LockFreeList} just add the number of the first with this number.
+	 * This test case runs 500 times and launches four waves of 500 threads each.
+	 * Each thread from every wave adds its respective number to the {@link LockFreeList},
+	 * but the {@link LockFreeList} will add every number only once.
 	 */
 	@BenchmarkOptions(benchmarkRounds = 500, warmupRounds = 0)
 	@Test

@@ -24,8 +24,8 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * Data class that represents a section of the list, delimited by the nodes {@code previous} and {@code current}. Objects of this class are returned by the
-	 * {@code find} method.
+	 * Data class that represents a section of the list, delimited by the nodes {@code previous}
+	 * and {@code current}. Objects of this class are returned by the {@code find} method.
 	 * 
 	 * @author Denny Hecht, Franziska Staake, Felix Hain
 	 */
@@ -82,8 +82,9 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * Tries to insert a new node between two appropriate nodes. Creates new node and sets its reference to given current node. After that tries to redirect
-	 * reference of previous node from current node to new node. Returns true, if succeeding. Returns false otherwise.
+	 * Tries to insert a new node between two appropriate nodes. Creates new node and sets its
+	 * reference to given current node. After that tries to redirect the reference of the previous
+	 * node from current node to new node. Returns true, if succeeding. Returns false otherwise.
 	 * 
 	 * @param previous
 	 * @param current
@@ -101,7 +102,8 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * Tries to redirect the reference of the previous node to the next node. Returns true, if succeeding. Returns false otherwise.
+	 * Tries to redirect the reference of the previous node to the next node.
+	 * Returns true, if succeeding. Returns false otherwise.
 	 * 
 	 * @param previous
 	 * @param current
@@ -113,7 +115,8 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * Returns a pair of nodes containing the previous and next node, that goes with the key. It Removes marked nodes when it founds them.
+	 * Returns a pair of nodes containing the previous and next node, that goes with the key.
+	 * It physically removes marked nodes when it encounters them.
 	 * 
 	 * @param head
 	 *            node, where traversing begins
@@ -141,7 +144,8 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * Searches for the appropriate node with the smallest key greater or equal to the given key. Returns a pair of nodes containing the previous and next node,
+	 * Searches for the appropriate node with the smallest key greater or equal to the given key.
+	 * Returns a pair of nodes containing the previous and next node,
 	 * that goes with the key. Returns null, if a problem occurs.
 	 * 
 	 * @param previous
@@ -157,7 +161,7 @@ public class LockFreeList<T> implements Set<T> {
 		Window w = null;
 		
 		/*
-		 * Traverses the list and proves every current node whether its reference is marked or not.
+		 * Traverses the list and checks every current node whether its reference is marked or not.
 		 */
 		while (!found) {
 			next = current.next.get(marked);
@@ -180,8 +184,8 @@ public class LockFreeList<T> implements Set<T> {
 			}
 			
 			/*
-			 * If deletion succeeded and the current nodes key is greater than or equal to the given key, it returns the founded pair of nodes. Otherwise the
-			 * traversal continues.
+			 * If deletion succeeded and the current nodes key is greater than or equal to the
+			 *  given key, it returns the found pair of nodes. Otherwise the traversal continues.
 			 */
 			if (current.key >= key) {
 				w = new Window(previous, current);
@@ -198,11 +202,13 @@ public class LockFreeList<T> implements Set<T> {
 	/**
 	 * Removes the specified item from the list.<br>
 	 * <br>
-	 * This method tries to locate {@code item} in the list using the {@code find} method, which, as a side effect, physically removes all nodes marked as
-	 * deleted on the way. If the {@code current} node returned by {@code find} doesn't have a key that matches that of {@code item}, {@code item} wasn't found
-	 * in the list, and the method terminates.<br>
-	 * Otherwise, the node containing {@code item} is marked as deleted; if this fails because the list has changed in the meantime, the method starts over,
-	 * calling {@code find} again. Finally, one try to physically remove the node is made and the method ends.
+	 * This method tries to locate {@code item} in the list using the {@code find} method, which,
+	 * as a side effect, physically removes all nodes marked as deleted it encounters on the way.
+	 * If the {@code current} node returned by {@code find} doesn't have a key that matches that of
+	 * {@code item}, {@code item} wasn't found in the list, and the method terminates.<br>
+	 * Otherwise, the node containing {@code item} is marked as deleted; if this fails because
+	 * the list has changed in the meantime, the method starts over, calling {@code find} again.
+	 * Finally, one try to physically remove the node is made and the method ends.
 	 * 
 	 * @param item
 	 *            The item to be removed.
@@ -242,8 +248,8 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * Traverses the list, searching for a node with an item equal to the given item. Returns true if the node it was searching for is present and unmarked.
-	 * Returns false otherwise.
+	 * Traverses the list, searching for a node with an item equal to the given item.
+	 * Returns true if the node it was searching for is present and unmarked, false otherwise.
 	 */
 	@Override
 	public boolean contains(T item) {
@@ -269,7 +275,7 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * prints all nodes of the list, also logically deleted nodes
+	 * prints all nodes of the list, including logically deleted (marked) nodes
 	 */
 	public String printList() {
 		StringBuilder builder = new StringBuilder("{");
@@ -303,8 +309,9 @@ public class LockFreeList<T> implements Set<T> {
 	 * Returns a String representation of the list.<br>
 	 * <br>
 	 * 
-	 * This is done by traversing the list from start to end, appending the {@code item} String representations of any unmarked nodes encountered, separated by
-	 * a comma, to a {@code StringBuilder} instance. The resulting String, enclosed in braces, is then returned.
+	 * This is done by traversing the list from start to end, appending the {@code item}
+	 * String representations of any unmarked nodes encountered, separated by a comma, to a
+	 * {@code StringBuilder} instance. The resulting String, enclosed in braces, is then returned.
 	 * 
 	 * @return String representation of the list.
 	 */
