@@ -1,6 +1,5 @@
 package test;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
 import org.junit.Assert;
@@ -19,62 +18,19 @@ import de.htwk.thread.LockFreeList;
  */
 public class TestLockFreeList extends AbstractBenchmark {
 	private LockFreeList<Integer> lockFreeList;
-//	private static final String FELIX = "{2, 4, 6, 8, 10}";
+	private static final String TEST = "{}";
 	
 	@Before
 	public void before() {
 		this.lockFreeList = new LockFreeList<>();
-		//initList();
 	}
 	
-	private void initList() {
-		this.lockFreeList.add(1);
-		this.lockFreeList.add(3);
-		this.lockFreeList.add(5);
-		this.lockFreeList.add(7);
-		this.lockFreeList.add(9);
-	}
-	
-	@BenchmarkOptions(benchmarkRounds = 500, warmupRounds = 0)
+	@BenchmarkOptions(benchmarkRounds = 5000, warmupRounds = 0)
 	@Test
 	public void testLockFreeList() throws InterruptedException {
-		Thread[] threads = new Thread[100];
-		//Arrays.setAll(threads, i -> new Thread(() -> lockFreeList.add(i)));
-		//IntStream.rangeClosed(1, 100).parallel().forEach(lockFreeList::add);
-		
-		for (Thread thread : threads) {
-			thread.start();
-		}
+		IntStream.rangeClosed(1, 500).parallel().forEach(this.lockFreeList::add);
+		IntStream.rangeClosed(1, 500).parallel().forEach(this.lockFreeList::remove);
 
-		for (Thread thread : threads) {
-			thread.join();
-		}
-		
-		System.out.println(this.lockFreeList);
-//		Assert.assertEquals(FELIX, this.lockFreeList.toString());
-	}
-	
-	private void operationsThread1() {
-		this.lockFreeList.add(2);
-		this.lockFreeList.add(10);
-		this.lockFreeList.add(8);
-		this.lockFreeList.add(4);
-		this.lockFreeList.add(6);
-	}
-	
-	private void operation() {
-		this.lockFreeList.add(1);
-		this.lockFreeList.add(3);
-		this.lockFreeList.add(5);
-		this.lockFreeList.add(7);
-		this.lockFreeList.add(9);
-	}
-	
-	private void operationsThread2() {
-		this.lockFreeList.remove(1);
-		this.lockFreeList.remove(9);
-		this.lockFreeList.remove(7);
-		this.lockFreeList.remove(3);
-		this.lockFreeList.remove(5);
+		Assert.assertEquals(TEST, this.lockFreeList.toString());
 	}
 }
