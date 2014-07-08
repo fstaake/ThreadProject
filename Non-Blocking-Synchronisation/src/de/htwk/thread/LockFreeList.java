@@ -49,12 +49,14 @@ public class LockFreeList<T> implements Set<T> {
 	@Override
 	public boolean add(T item) {
 		int key = Node.createKey(item);
-
+		boolean goOut = false;
+		boolean returnValue = false;
+		
 		/*
 		 * Searches for the node with a greater value than the given one. If insertion doesn't succeeded caused by an access of another thread, process is tried
 		 * again. Loop is terminated by return.
 		 */
-		while (true) {
+		while (!goOut) {
 			// Searching for the node with a smaller value
 			Window window = find(this.head, key);
 
@@ -64,14 +66,18 @@ public class LockFreeList<T> implements Set<T> {
 			// Given value already exists in set?
 			if (current.key == key) {
 				// new node can't be inserted
-				return false;
+				returnValue = false;
+				goOut = true;
 			} else {
 				// insert a new node and return true, if succeeded
 				if (insertNewNodeBetweenGivenNodes(previous, current, item, key)) {
-					return true;
+					returnValue = true;
+					goOut = true;
 				}
 			}
 		}
+		
+		return returnValue;
 	}
 
 	/**
