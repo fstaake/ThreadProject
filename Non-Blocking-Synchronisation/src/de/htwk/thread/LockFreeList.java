@@ -111,26 +111,24 @@ public class LockFreeList<T> implements Set<T> {
 	 * @param head
 	 *            node, where traversing begins
 	 * @param key
-	 *            hashcode of item of the node, that should be find
+	 *            hash code of item of the node, that should be find
 	 * @return
 	 */
 	private Window find(Node<T> head, int key) {
 		Node<T> previous = null;
 		Node<T> current = null;
-
+		Window w = null;
 		/*
 		 * Traverses the list, searching for a previous node, with a key less than given key, and a next node, with a key greater than or equal to given key.
 		 */
-		while (true) {
+		while (w == null) {
 			previous = head;
 			current = previous.next.getReference();
 
-			Window w = findAppropriateNode(previous, current, key);
-
-			if (w != null) {
-				return w;
-			}
+			w = findAppropriateNode(previous, current, key);
 		}
+		
+		return w;
 	}
 
 	/**
