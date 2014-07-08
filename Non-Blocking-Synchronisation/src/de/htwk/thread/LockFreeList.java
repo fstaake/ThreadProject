@@ -149,11 +149,13 @@ public class LockFreeList<T> implements Set<T> {
 		boolean[] marked = { false };
 		boolean deleted;
 		Node<T> next = null;
+		boolean found = false;
+		Window w = null;
 
 		/*
 		 * Traverses the list and proves every current node whether its reference is marked or not.
 		 */
-		while (true) {
+		while (!found) {
 			next = current.next.get(marked);
 
 			/*
@@ -162,13 +164,16 @@ public class LockFreeList<T> implements Set<T> {
 			while (marked[0]) {
 				deleted = tryRedirectLinkToNextNode(previous, current, next);
 
-				// If deletion failed, it returns null.
-				if (!deleted) {
-					return null;
-				}
-
 				current = next;
 				next = current.next.get(marked);
+				
+				// If deletion failed, it returns null.
+				if (!deleted) {
+					marked[0] = false;
+					found = true;
+				}
+
+				
 			}
 
 			/*
@@ -176,13 +181,14 @@ public class LockFreeList<T> implements Set<T> {
 			 * traversal continues.
 			 */
 			if (current.key >= key) {
-				return new Window(previous, current);
+				w = new Window(previous, current);
+				found = true;
 			}
 
 			previous = current;
 			current = next;
 		}
-
+		return w;
 	}
 
 	/**
