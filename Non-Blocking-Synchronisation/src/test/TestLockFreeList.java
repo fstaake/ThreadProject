@@ -43,7 +43,7 @@ public class TestLockFreeList extends AbstractBenchmark {
 
 	/**
 	 * This test case runs 500 times and each thread will add his own thread id. <br>
-	 * The test runs 4*500 threads and each 4th thread will add the same number, but the {@link LockFreeList} just add the number of the first with this number.
+	 * The test starts 4*500 threads and each 4th thread will add the same number, but the {@link LockFreeList} just add the number of the first thread with this number.
 	 */
 	@BenchmarkOptions(benchmarkRounds = 500, warmupRounds = 0)
 	@Test
