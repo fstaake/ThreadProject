@@ -1,5 +1,8 @@
 package test;
 
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,11 +38,9 @@ public class TestLockFreeList extends AbstractBenchmark {
 	@BenchmarkOptions(benchmarkRounds = 500, warmupRounds = 0)
 	@Test
 	public void testLockFreeList() throws InterruptedException {
-		Thread[] threads = new Thread[10000];
-		for (int i = 0; i < threads.length; i++) {
-			final int x = i;
-			threads[i] = new Thread(() -> this.lockFreeList.add(x));
-		}
+		Thread[] threads = new Thread[100];
+		//Arrays.setAll(threads, i -> new Thread(() -> lockFreeList.add(i)));
+		//IntStream.rangeClosed(1, 100).parallel().forEach(lockFreeList::add);
 		
 		for (Thread thread : threads) {
 			thread.start();
@@ -49,18 +50,6 @@ public class TestLockFreeList extends AbstractBenchmark {
 			thread.join();
 		}
 		
-		for (int i = 0; i < threads.length; i++) {
-			final int x = i;
-			threads[i] = new Thread(() -> this.lockFreeList.remove(x));
-		}
-		
-		for (Thread thread : threads) {
-			thread.start();
-		}
-
-		for (Thread thread : threads) {
-			thread.join();
-		}
 		System.out.println(this.lockFreeList);
 //		Assert.assertEquals(FELIX, this.lockFreeList.toString());
 	}
