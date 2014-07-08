@@ -37,6 +37,11 @@ public class Node<T> {
 		this.key = key;
 	}
 	
+	public Node(){
+		this.item = null;
+		this.key = -1;
+	}
+	
 	/**
 	 * 
 	 * @param item

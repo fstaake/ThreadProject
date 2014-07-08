@@ -40,7 +40,8 @@ public class LockFreeList<T> implements Set<T> {
 	}
 
 	/**
-	 * Adds a new Node with the given value between the appropriate nodes. Returns false if a node with the given value is already inserted into the set or the
+	 * Adds a new Node with the given value between the appropriate nodes. 
+	 * Returns false if a node with the given value is already inserted into the set or the
 	 * value couldn't be added. Returns true otherwise.
 	 * 
 	 * @item given value of the node, that should be added
@@ -49,29 +50,27 @@ public class LockFreeList<T> implements Set<T> {
 	@Override
 	public boolean add(T item) {
 		int key = Node.createKey(item);
+		boolean inserted = false;
+		Node<T> current = new Node<T>();
 
 		/*
-		 * Searches for the node with a greater value than the given one. If insertion doesn't succeeded caused by an access of another thread, process is tried
-		 * again. Loop is terminated by return.
+		 * Searches for the node with a greater value than the given one. 
+		 * If insertion doesn't succeeded caused by an access of another thread, process is tried
+		 * again. Loop is terminated by successful insert or founded equal key.
 		 */
-		while (true) {
+		while (!inserted || current.key != key) {
 			// Searching for the node with a smaller value
 			Window window = find(this.head, key);
 
 			Node<T> previous = window.previous;
-			Node<T> current = window.current;
-
-			// Given value already exists in set?
-			if (current.key == key) {
-				// new node can't be inserted
-				return false;
-			} else {
-				// insert a new node and return true, if succeeded
-				if (insertNewNodeBetweenGivenNodes(previous, current, item, key)) {
-					return true;
-				}
+			current = window.current;
+			
+			if (insertNewNodeBetweenGivenNodes(previous, current, item, key)) {
+				inserted = true;
 			}
 		}
+	
+		return inserted;
 	}
 
 	/**
@@ -117,20 +116,20 @@ public class LockFreeList<T> implements Set<T> {
 	private Window find(Node<T> head, int key) {
 		Node<T> previous = null;
 		Node<T> current = null;
+		
+		Window w = null;
 
 		/*
 		 * Traverses the list, searching for a previous node, with a key less than given key, and a next node, with a key greater than or equal to given key.
 		 */
-		while (true) {
+		while (w == null) {
 			previous = head;
 			current = previous.next.getReference();
 
-			Window w = findAppropriateNode(previous, current, key);
-
-			if (w != null) {
-				return w;
-			}
+			w = findAppropriateNode(previous, current, key);
 		}
+		
+		return w;
 	}
 
 	/**
@@ -146,11 +145,13 @@ public class LockFreeList<T> implements Set<T> {
 		boolean[] marked = { false };
 		boolean deleted;
 		Node<T> next = null;
+		Window w = null;
+		boolean foundedOrFailure = false;
 		
 		/*
 		 * Traverses the list and proves every current node whether its reference is marked or not.
 		 */
-		while (true) {
+		while (!foundedOrFailure) {
 			next = current.next.get(marked);
 
 			/*
@@ -159,15 +160,17 @@ public class LockFreeList<T> implements Set<T> {
 			while (marked[0]) {
 				deleted = tryRedirectLinkToNextNode(previous, current, next);
 
-				// If deletion failed, it returns null.
-				if (!deleted) {
-					return null;
-				}
-
 				current = next;
 				next = current.next.get(marked);
+				
+				// If deletion failed, it returns null.
+				if (!deleted) {
+					//return null;
+					marked[0] = false;
+					foundedOrFailure = true;
+				}
 			}
-
+			
 			/*
 			 * If deletion succeeded and the current nodes key is
 			 * greater than or equal to the given key, it returns
@@ -175,12 +178,15 @@ public class LockFreeList<T> implements Set<T> {
 			 * Otherwise the traversal continues.
 			 */
 			if (current.key >= key) {
-				return new Window(previous, current);
+				w = new Window(previous, current);
+				foundedOrFailure = true;
 			}
 
 			previous = current;
 			current = next;
 		}
+		
+		return w;
 
 	}
 
@@ -200,28 +206,27 @@ public class LockFreeList<T> implements Set<T> {
 	@Override
 	public boolean remove(T item) {
 		int key = Node.createKey(item);
+		Node<T> current = new Node<T>();
+		boolean removed = false;
 
-		while (true) {
+		while (!removed || current.key != key) {
 			Window window = find(this.head, key);
 			Node<T> previous = window.previous;
-			Node<T> current = window.current;
+			current = window.current;
+			
+			Node<T> next = current.next.getReference();
 
-			if (current.key != key) {
-				// a node containing the requested item was not found -> nothing to delete
-				return false;
-			} else {
-				Node<T> next = current.next.getReference();
-
-				// attempt to mark the node, making sure the reference to next hasn't changed
-				// (otherwise find has to be done anew)
-				if (current.next.attemptMark(next, true) == true) {
-					// a single attempt to physically remove the node; failure gets ignored,
-					// as it will be removed as soon as the find method iterates over it anyway
-					tryRedirectLinkToNextNode(previous, current, next);
-					return true;
-				}
+			// attempt to mark the node, making sure the reference to next hasn't changed
+			// (otherwise find has to be done anew)
+			if (current.next.attemptMark(next, true) == true) {
+				// a single attempt to physically remove the node; failure gets ignored,
+				// as it will be removed as soon as the find method iterates over it anyway
+				tryRedirectLinkToNextNode(previous, current, next);
+				removed = true;
 			}
 		}
+		
+		return removed;
 	}
 
 	/**
