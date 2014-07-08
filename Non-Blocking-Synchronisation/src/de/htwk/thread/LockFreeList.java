@@ -50,8 +50,8 @@ public class LockFreeList<T> implements Set<T> {
 	public boolean add(T item) {
 		int key = Node.createKey(item);
 		boolean goOut = false;
-		boolean returnValue = false;
-		
+		boolean added = false;
+
 		/*
 		 * Searches for the node with a greater value than the given one. If insertion doesn't succeeded caused by an access of another thread, process is tried
 		 * again. Loop is terminated by return.
@@ -66,18 +66,17 @@ public class LockFreeList<T> implements Set<T> {
 			// Given value already exists in set?
 			if (current.key == key) {
 				// new node can't be inserted
-				returnValue = false;
 				goOut = true;
 			} else {
 				// insert a new node and return true, if succeeded
 				if (insertNewNodeBetweenGivenNodes(previous, current, item, key)) {
-					returnValue = true;
+					added = true;
 					goOut = true;
 				}
 			}
 		}
-		
-		return returnValue;
+
+		return added;
 	}
 
 	/**
@@ -98,7 +97,7 @@ public class LockFreeList<T> implements Set<T> {
 
 		return tryRedirectLinkToNextNode(previous, current, newNode);
 	}
-	
+
 	/**
 	 * Tries to redirect the reference of the previous node to the next node. Returns true, if succeeding. Returns false otherwise.
 	 * 
@@ -133,7 +132,7 @@ public class LockFreeList<T> implements Set<T> {
 
 			w = findAppropriateNode(previous, current, key);
 		}
-		
+
 		return w;
 	}
 
@@ -150,7 +149,7 @@ public class LockFreeList<T> implements Set<T> {
 		boolean[] marked = { false };
 		boolean deleted;
 		Node<T> next = null;
-		
+
 		/*
 		 * Traverses the list and proves every current node whether its reference is marked or not.
 		 */
@@ -173,10 +172,8 @@ public class LockFreeList<T> implements Set<T> {
 			}
 
 			/*
-			 * If deletion succeeded and the current nodes key is
-			 * greater than or equal to the given key, it returns
-			 * the founded pair of nodes. 
-			 * Otherwise the traversal continues.
+			 * If deletion succeeded and the current nodes key is greater than or equal to the given key, it returns the founded pair of nodes. Otherwise the
+			 * traversal continues.
 			 */
 			if (current.key >= key) {
 				return new Window(previous, current);
@@ -204,28 +201,34 @@ public class LockFreeList<T> implements Set<T> {
 	@Override
 	public boolean remove(T item) {
 		int key = Node.createKey(item);
+		Node<T> current = new Node<>(null, -1);
+		boolean removed = false;
+		boolean goOut = false;
 
-		while (true) {
+		while (!goOut) {
 			Window window = find(this.head, key);
 			Node<T> previous = window.previous;
-			Node<T> current = window.current;
+			current = window.current;
+
+			Node<T> next = current.next.getReference();
 
 			if (current.key != key) {
 				// a node containing the requested item was not found -> nothing to delete
-				return false;
-			} else {
-				Node<T> next = current.next.getReference();
+				goOut = true;
+			}
 
-				// attempt to mark the node, making sure the reference to next hasn't changed
-				// (otherwise find has to be done anew)
-				if (current.next.attemptMark(next, true) == true) {
-					// a single attempt to physically remove the node; failure gets ignored,
-					// as it will be removed as soon as the find method iterates over it anyway
-					tryRedirectLinkToNextNode(previous, current, next);
-					return true;
-				}
+			// attempt to mark the node, making sure the reference to next hasn't changed
+			// (otherwise find has to be done anew)
+			if (current.next.attemptMark(next, true) == true) {
+				// a single attempt to physically remove the node; failure gets ignored,
+				// as it will be removed as soon as the find method iterates over it anyway
+				tryRedirectLinkToNextNode(previous, current, next);
+				removed = true;
+				goOut = true;
 			}
 		}
+
+		return removed;
 	}
 
 	/**
@@ -290,8 +293,8 @@ public class LockFreeList<T> implements Set<T> {
 	 * Returns a String representation of the list.<br>
 	 * <br>
 	 * 
-	 * This is done by traversing the list from start to end, appending the {@code item} String representations of any unmarked nodes encountered, separated by a
-	 * comma, to a {@code StringBuilder} instance. The resulting String, enclosed in braces, is then returned.
+	 * This is done by traversing the list from start to end, appending the {@code item} String representations of any unmarked nodes encountered, separated by
+	 * a comma, to a {@code StringBuilder} instance. The resulting String, enclosed in braces, is then returned.
 	 * 
 	 * @return String representation of the list.
 	 */
