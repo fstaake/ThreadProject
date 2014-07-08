@@ -49,7 +49,7 @@ public class LockFreeList<T> implements Set<T> {
 	@Override
 	public boolean add(T item) {
 		int key = Node.createKey(item);
-
+		
 		/*
 		 * Searches for the node with a greater value than the given one. If insertion doesn't succeeded caused by an access of another thread, process is tried
 		 * again. Loop is terminated by return.
@@ -117,20 +117,18 @@ public class LockFreeList<T> implements Set<T> {
 	private Window find(Node<T> head, int key) {
 		Node<T> previous = null;
 		Node<T> current = null;
-
+		Window w =  null;
 		/*
 		 * Traverses the list, searching for a previous node, with a key less than given key, and a next node, with a key greater than or equal to given key.
 		 */
-		while (true) {
+		while (w == null) {
 			previous = head;
 			current = previous.next.getReference();
 
-			Window w = findAppropriateNode(previous, current, key);
-
-			if (w != null) {
-				return w;
-			}
+			w = findAppropriateNode(previous, current, key);
 		}
+		
+		return w;
 	}
 
 	/**
@@ -146,11 +144,12 @@ public class LockFreeList<T> implements Set<T> {
 		boolean[] marked = { false };
 		boolean deleted;
 		Node<T> next = null;
-		
+		Window w = null;
+		boolean found = false;
 		/*
 		 * Traverses the list and proves every current node whether its reference is marked or not.
 		 */
-		while (true) {
+		while (!found) {
 			next = current.next.get(marked);
 
 			/*
@@ -159,13 +158,16 @@ public class LockFreeList<T> implements Set<T> {
 			while (marked[0]) {
 				deleted = tryRedirectLinkToNextNode(previous, current, next);
 
-				// If deletion failed, it returns null.
-				if (!deleted) {
-					return null;
-				}
-
 				current = next;
 				next = current.next.get(marked);
+				
+				// If deletion failed, it returns null.
+				if (!deleted) {
+					marked[0] = false;
+					found = true;
+				}
+
+				
 			}
 
 			/*
@@ -175,12 +177,16 @@ public class LockFreeList<T> implements Set<T> {
 			 * Otherwise the traversal continues.
 			 */
 			if (current.key >= key) {
-				return new Window(previous, current);
+				
+				w = new Window(previous, current);
+				found = true;
 			}
 
 			previous = current;
 			current = next;
 		}
+		
+		return w;
 
 	}
 
@@ -214,7 +220,7 @@ public class LockFreeList<T> implements Set<T> {
 
 				// attempt to mark the node, making sure the reference to next hasn't changed
 				// (otherwise find has to be done anew)
-				if (current.next.attemptMark(next, true) == true) {
+				if (current.next.attemptMark(next, true)) {
 					// a single attempt to physically remove the node; failure gets ignored,
 					// as it will be removed as soon as the find method iterates over it anyway
 					tryRedirectLinkToNextNode(previous, current, next);

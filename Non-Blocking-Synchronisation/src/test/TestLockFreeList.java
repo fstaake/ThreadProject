@@ -25,7 +25,7 @@ public class TestLockFreeList extends AbstractBenchmark {
 		this.lockFreeList = new LockFreeList<>();
 	}
 	
-	@BenchmarkOptions(benchmarkRounds = 5000, warmupRounds = 0)
+	@BenchmarkOptions(benchmarkRounds = 500, warmupRounds = 0)
 	@Test
 	public void testLockFreeList() throws InterruptedException {
 		IntStream.rangeClosed(1, 500).parallel().forEach(this.lockFreeList::add);
